@@ -1,6 +1,7 @@
 // PCL lib Functions for processing point clouds 
 
 #include "processPointClouds.h"
+#include <unordered_set>
 
 
 //constructor:
@@ -84,7 +85,6 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
     }
 
     std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> segResult = SeparateClouds(inliers, cloud);
-    // TODO:: Fill in this function to find inliers for the cloud.
 
     auto endTime = std::chrono::steady_clock::now();
     auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
@@ -92,6 +92,72 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
 
     return segResult;
 }
+
+
+template<typename PointT>
+std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::Ransac3D(typename pcl::PointCloud<PointT>::Ptr cloud, int maxIterations, float distanceThreshold){
+
+    auto startTime = std::chrono::steady_clock::now();
+
+	std::unordered_set<int> inliersResult;
+	srand(time(NULL));
+
+
+	while(maxIterations--){
+        
+		std::unordered_set<int> inliers;
+
+		while(inliers.size() <  3){
+			inliers.insert(rand() % (cloud->points.size()));
+		}
+
+		auto itr = inliers.begin();
+        pcl::PointXYZ p1 = cloud->points[*itr];
+		itr++;;
+        pcl::PointXYZ p2 = cloud->points[*itr];
+		itr++;;
+        pcl::PointXYZ p3 = cloud->points[*itr];
+
+        float A = (p2.y - p1.y)*(p3.z - p1.z) - (p2.z - p1.z)*(p3.y - p1.y);
+        float B = (p2.z - p1.z)*(p3.x - p1.x) - (p2.x - p1.x)*(p3.z - p1.z);
+        float C = (p2.x - p1.x)*(p3.y - p1.y) - (p2.y - p1.y)*(p3.x - p1.x);
+        float D =  -(A*p1.x + B*p1.y + C*p1.z);
+        float norm  = sqrt(A*A + B*B + C*C);
+
+		for(int idx=0; idx < cloud->points.size(); idx++){
+			if(inliers.count(idx) > 0){
+				continue;
+			}
+
+			pcl::PointXYZ point = cloud->points[idx];
+			float dist = fabs(A*point.x + B*point.y + C*point.z + D)/norm;
+
+			if(dist <= distanceThreshold){
+				inliers.insert(idx);
+
+			}
+		}
+
+		if (inliers.size() > inliersResult.size()){
+			inliersResult = inliers;
+		}
+	}
+
+    pcl::PointIndices::Ptr final_inliers(new pcl::PointIndices);
+    for(const int i : inliersResult){
+        final_inliers->indices.push_back(i);
+    }
+
+
+    std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> segResult = SeparateClouds(final_inliers, cloud);
+
+    auto endTime = std::chrono::steady_clock::now();
+    auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+    std::cout << "plane segmentation with Ransac 3D took " << elapsedTime.count() << " milliseconds" << std::endl;
+
+    return segResult;
+}
+
 
 
 template<typename PointT>

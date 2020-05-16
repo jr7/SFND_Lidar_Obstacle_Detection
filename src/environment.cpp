@@ -55,7 +55,8 @@ void simpleHighway(pcl::visualization::PCLVisualizer::Ptr& viewer)
     auto processor = std::unique_ptr<ProcessPointClouds<pcl::PointXYZ>>
                                     (new ProcessPointClouds<pcl::PointXYZ>());
 
-    auto segmentation = processor->SegmentPlane(point_cloud, 100, 0.2);
+    //auto segmentation = processor->SegmentPlane(point_cloud, 100, 0.2);
+    auto segmentation = processor->Ransac3D(point_cloud, 100, 0.2);
 
     renderPointCloud(viewer, segmentation.first,"obstCloud",Color(1,0,0));
     renderPointCloud(viewer, segmentation.second,"planeCloud",Color(0,1,0));
