@@ -98,10 +98,8 @@ template<typename PointT>
 std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::Ransac3D(typename pcl::PointCloud<PointT>::Ptr cloud, int maxIterations, float distanceThreshold){
 
     auto startTime = std::chrono::steady_clock::now();
-
 	std::unordered_set<int> inliersResult;
 	srand(time(NULL));
-
 
 	while(maxIterations--){
         
@@ -134,10 +132,8 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
 
 			if(dist <= distanceThreshold){
 				inliers.insert(idx);
-
 			}
 		}
-
 		if (inliers.size() > inliersResult.size()){
 			inliersResult = inliers;
 		}
@@ -148,13 +144,10 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
         final_inliers->indices.push_back(i);
     }
 
-
     std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> segResult = SeparateClouds(final_inliers, cloud);
-
     auto endTime = std::chrono::steady_clock::now();
     auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
     std::cout << "plane segmentation with Ransac 3D took " << elapsedTime.count() << " milliseconds" << std::endl;
-
     return segResult;
 }
 
@@ -169,7 +162,31 @@ std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::C
 
     std::vector<typename pcl::PointCloud<PointT>::Ptr> clusters;
 
-    // TODO:: Fill in the function to perform euclidean clustering to group detected obstacles
+    typename pcl::search::KdTree<PointT>::Ptr search_tree (new pcl::search::KdTree<PointT>);
+    search_tree->setInputCloud(cloud);
+
+    std::vector<pcl::PointIndices> cluster_indices;
+    pcl::EuclideanClusterExtraction<PointT> ec;
+
+    ec.setClusterTolerance(clusterTolerance); 
+    ec.setMinClusterSize(minSize);
+    ec.setMaxClusterSize(maxSize);
+    ec.setSearchMethod(search_tree);
+    ec.setInputCloud(cloud);
+    ec.extract(cluster_indices);
+
+    for(auto index_obj : cluster_indices){
+
+        typename pcl::PointCloud<PointT>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZ>);
+    
+        for (int index : index_obj.indices){
+            cloud_cluster->points.push_back (cloud->points[index]); //*
+        }
+        cloud_cluster->width = cloud_cluster->points.size ();
+        cloud_cluster->height = 1;
+        cloud_cluster->is_dense = true;
+        clusters.push_back(cloud_cluster);
+    }
 
     auto endTime = std::chrono::steady_clock::now();
     auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);

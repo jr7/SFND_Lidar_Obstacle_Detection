@@ -87,10 +87,10 @@ struct Lidar
 	{
 		// TODO:: set minDistance to 5 to remove points from roof of ego car
 		minDistance = 5;
-		maxDistance = 50;
-		resolution = 0.002;
+		maxDistance = 100;
+		resolution = 0.001;
 		// TODO:: set sderr to 0.2 to get more interesting pcd files
-		sderr = 0.2;
+		sderr = 0.1;
 		cars = setCars;
 		groundSlope = setGroundSlope;
 
