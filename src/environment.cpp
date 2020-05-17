@@ -86,9 +86,9 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer,
 
 
     // Experiment with the ? values and find what works best
-    auto filterCloud = pointProcessorI->FilterCloud(inputCloud, 0.3 , Eigen::Vector4f (-10, -5, -2, 1), Eigen::Vector4f (30, 8, 5, 1));
+    auto filterCloud = pointProcessorI->FilterCloud(inputCloud, 0.3 , Eigen::Vector4f (-5, -5, -2, 1), Eigen::Vector4f (30, 8, 5, 1));
 
-    auto segmentation = pointProcessorI->Ransac3D(filterCloud, 1000, 0.1);
+    auto segmentation = pointProcessorI->Ransac3D(filterCloud, 100, 0.1);
     renderPointCloud(viewer, segmentation.second,"planeCloud",Color(0,1,0));
 
 
