@@ -210,7 +210,7 @@ std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::C
 
     for(auto index_obj : cluster_indices){
 
-        typename pcl::PointCloud<PointT>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZ>);
+        typename pcl::PointCloud<PointT>::Ptr cloud_cluster (new pcl::PointCloud<PointT>);
     
         for (int index : index_obj.indices){
             cloud_cluster->points.push_back (cloud->points[index]); //*
